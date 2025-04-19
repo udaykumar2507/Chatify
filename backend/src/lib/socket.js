@@ -17,22 +17,24 @@ export function getReceiverSocketId(userId){
 
 const userSocketMap ={}
 
+io.on("connection", (socket) => {
+  console.log("A user Connected", socket.id);
+  console.log("Full handshake:", socket.handshake);
 
+  const userId = socket.handshake?.query?.userId;
+  if (userId) {
+    userSocketMap[userId] = socket.id;
+    io.emit("getOnlineUsers", Object.keys(userSocketMap));
+  }
 
-io.on("connection",(socket)=>{
-    console.log("A user Connected",socket.id);
+  socket.on("disconnect", () => {
+    console.log("A user disconnected", socket.id);
+    if (userId) {
+      delete userSocketMap[userId];
+      io.emit("getOnlineUsers", Object.keys(userSocketMap));
+    }
+  });
+});
 
-    const userId=socket.handshake.query.userId;
-    console.log("UserID from handshake:", socket.handshake.query.userId);
-    if(userId) userSocketMap[userId] =socket.id;
-
-    io.emit("getOnlineUsers",Object.keys(userSocketMap));
-
-    socket.on("disconnect",()=>{
-        console.log("A user disconnected",socket.id);
-        delete userSocketMap[userId];
-        io.emit("getOnlineUsers",Object.keys(userSocketMap));
-    })
-})
 
 export {io,app,server};
